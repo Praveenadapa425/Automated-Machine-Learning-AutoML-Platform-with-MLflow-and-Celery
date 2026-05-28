@@ -33,5 +33,5 @@ async def create_job(
 @router.get("/{job_id}", response_model=JobStatusResponse, summary="Get AutoML job status")
 def get_job_status(job_id: str) -> JobStatusResponse:
     if not job_id.strip():
-        raise HTTPException(status_code=400, detail="job_id is required")
+        raise HTTPException(status_code=404, detail="Job not found")
     return build_job_status(job_id)

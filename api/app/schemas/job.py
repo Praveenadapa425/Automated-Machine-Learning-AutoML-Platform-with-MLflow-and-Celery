@@ -9,5 +9,5 @@ class JobCreateResponse(BaseModel):
 class JobStatusResponse(BaseModel):
     job_id: str
     status: str
-    celery_state: str
-    detail: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None

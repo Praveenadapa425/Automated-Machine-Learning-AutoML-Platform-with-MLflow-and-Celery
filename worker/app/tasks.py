@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 from app.celery_app import celery_app
 from app.core.config import get_settings
@@ -12,19 +13,26 @@ logger = logging.getLogger(__name__)
 def train_automl(self, job_id: str) -> dict[str, str]:
     settings = get_settings()
     csv_path = Path(settings.upload_dir) / f"{job_id}.csv"
+    started_at = datetime.now(timezone.utc)
 
     try:
         if not csv_path.exists():
             raise FileNotFoundError(f"CSV file not found for job {job_id}: {csv_path}")
 
-        self.update_state(state="STARTED", meta={"job_id": job_id, "message": "Training started"})
+        self.update_state(
+            state="STARTED",
+            meta={"job_id": job_id, "message": "Training started", "start_time": started_at.isoformat()},
+        )
 
         paths = prepare_job_paths(settings, job_id)
         logger.info("Starting sample AutoML task for job %s", job_id)
+        finished_at = datetime.now(timezone.utc)
 
         result = {
             "job_id": job_id,
             "message": "Sample AutoML task completed",
+            "start_time": started_at.isoformat(),
+            "end_time": finished_at.isoformat(),
             "artifacts_dir": str(paths["artifacts"]),
             "reports_dir": str(paths["reports"]),
             "csv_path": str(csv_path),
@@ -34,5 +42,13 @@ def train_automl(self, job_id: str) -> dict[str, str]:
         return result
     except Exception as exc:
         logger.exception("AutoML task failed for job %s", job_id)
-        self.update_state(state="FAILURE", meta={"job_id": job_id, "message": str(exc)})
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "job_id": job_id,
+                "message": str(exc),
+                "start_time": started_at.isoformat(),
+                "end_time": datetime.now(timezone.utc).isoformat(),
+            },
+        )
         raise
