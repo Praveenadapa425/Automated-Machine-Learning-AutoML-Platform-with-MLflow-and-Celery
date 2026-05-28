@@ -51,6 +51,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MLFLOW_TRACKING_URI: http://mlflow:5000
+    command: ["celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=info", "--concurrency=1", "--hostname=automl@%h"]
     depends_on:
       - redis
       - mlflow

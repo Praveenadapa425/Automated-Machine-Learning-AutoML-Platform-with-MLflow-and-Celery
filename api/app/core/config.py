@@ -13,6 +13,8 @@ class Settings:
     cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
     api_prefix: str = os.getenv("API_PREFIX", "")
     upload_dir: str = os.getenv("UPLOAD_DIR", "/data/uploads")
+    celery_broker_url: str = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
+    celery_result_backend: str = os.getenv("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
 
     @property
     def cors_origin_list(self) -> List[str]:

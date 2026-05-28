@@ -1,9 +1,10 @@
 import logging
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.core.config import get_settings
-from app.schemas.job import JobCreateResponse
+from app.schemas.job import JobCreateResponse, JobStatusResponse
+from app.services.job_status_service import build_job_status
 from app.services.job_service import save_job_upload
 
 logger = logging.getLogger(__name__)
@@ -27,3 +28,10 @@ async def create_job(
     )
     logger.info("Created job %s", result["job_id"])
     return JobCreateResponse(**result)
+
+
+@router.get("/{job_id}", response_model=JobStatusResponse, summary="Get AutoML job status")
+def get_job_status(job_id: str) -> JobStatusResponse:
+    if not job_id.strip():
+        raise HTTPException(status_code=400, detail="job_id is required")
+    return build_job_status(job_id)

@@ -8,7 +8,7 @@ celery_app = Celery(
     "automl_worker",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.jobs"],
+    include=["app.tasks"],
 )
 
 celery_app.conf.update(
@@ -19,4 +19,6 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     worker_prefetch_multiplier=1,
+    task_default_queue="automl",
+    task_routes={"app.tasks.train_automl": {"queue": "automl"}},
 )

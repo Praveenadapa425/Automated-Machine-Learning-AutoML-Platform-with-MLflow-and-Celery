@@ -1,11 +1,12 @@
 import csv
 import logging
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile
 
 from app.core.config import Settings
+from app.services.celery_service import enqueue_train_automl
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +62,10 @@ async def save_job_upload(
         csv.Sniffer().sniff("\n".join(sample))
 
         file_path.write_text(decoded, encoding="utf-8")
+        enqueue_train_automl(job_id)
 
         logger.info(
-            "Saved job upload %s to %s for task_type=%s target_column=%s time_budget_seconds=%s",
+            "Saved job upload %s to %s and queued task for task_type=%s target_column=%s time_budget_seconds=%s",
             job_id,
             file_path,
             validated_task_type,
@@ -71,9 +73,18 @@ async def save_job_upload(
             time_budget_seconds,
         )
         return {"job_id": job_id, "status": "PENDING"}
+    except HTTPException:
+        if file_path.exists():
+            file_path.unlink(missing_ok=True)
+        raise
     except UnicodeDecodeError as exc:
         raise HTTPException(status_code=400, detail="CSV file must be UTF-8 encoded") from exc
     except csv.Error as exc:
         raise HTTPException(status_code=400, detail="Uploaded file is not a valid CSV") from exc
+    except Exception as exc:
+        if file_path.exists():
+            file_path.unlink(missing_ok=True)
+        logger.exception("Failed to queue AutoML job %s", job_id)
+        raise HTTPException(status_code=503, detail="Failed to queue AutoML job") from exc
     finally:
         await upload_file.close()
