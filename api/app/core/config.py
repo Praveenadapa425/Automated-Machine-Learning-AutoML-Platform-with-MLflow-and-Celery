@@ -12,6 +12,7 @@ class Settings:
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
     api_prefix: str = os.getenv("API_PREFIX", "")
+    upload_dir: str = os.getenv("UPLOAD_DIR", "/data/uploads")
 
     @property
     def cors_origin_list(self) -> List[str]:
