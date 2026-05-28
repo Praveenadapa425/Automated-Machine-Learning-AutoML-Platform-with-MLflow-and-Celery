@@ -1,0 +1,11 @@
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+
+class HealthResponse(BaseModel):
+    status: str = Field(default="ok")
+    service: str
+    environment: str
+    version: str
+    timestamp: datetime

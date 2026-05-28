@@ -1,0 +1,42 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Project-generated folders
+output/
+mlruns/
+artifacts/
+reports/
+data/
+
+# Docker / compose artifacts
+*.log
+docker-compose.override.yml
+.docker/
+
+# Tooling / editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Placeholder directories created during setup
+.env.example.dir/
+docker-compose.dir/
