@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 from app.core.config import Settings
 from app.services.celery_service import enqueue_train_automl
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,17 @@ async def save_job_upload(
         csv.Sniffer().sniff("\n".join(sample))
 
         file_path.write_text(decoded, encoding="utf-8")
+
+        # persist job metadata for the worker
+        metadata = {
+            "job_id": job_id,
+            "target_column": target_column,
+            "task_type": validated_task_type,
+            "time_budget_seconds": int(time_budget_seconds),
+        }
+        meta_path = upload_root / f"{job_id}.meta.json"
+        meta_path.write_text(json.dumps(metadata), encoding="utf-8")
+
         enqueue_train_automl(job_id)
 
         logger.info(

@@ -5,7 +5,7 @@ import json
 
 from app.celery_app import celery_app
 from app.core.config import get_settings
-from app.services.automl_service import prepare_job_paths
+from app.services.automl_service import prepare_job_paths, run_full_automl
 
 logger = logging.getLogger(__name__)
 
@@ -26,28 +26,23 @@ def train_automl(self, job_id: str) -> dict[str, str]:
         )
 
         paths = prepare_job_paths(settings, job_id)
-        logger.info("Starting sample AutoML task for job %s", job_id)
-        # --- Minimal artifact generation for API integration ---
-        finished_at = datetime.now(timezone.utc)
+        logger.info("Starting FLAML AutoML task for job %s", job_id)
 
-        results = {
-            "job_id": job_id,
-            "best_model_name": "baseline-model",
-            "best_model_score": 0.0,
-            "evaluation_metric": "accuracy",
-            "mlflow_run_id": None,
-            "start_time": started_at.isoformat(),
-            "end_time": finished_at.isoformat(),
-        }
-
-        results_file = Path(paths["artifacts"]) / "results.json"
+        # load metadata written by API
+        meta_path = Path(settings.upload_dir) / f"{job_id}.meta.json"
+        if not meta_path.exists():
+            raise FileNotFoundError(f"Metadata file not found for job {job_id}: {meta_path}")
         try:
-            with results_file.open("w", encoding="utf-8") as fh:
-                json.dump(results, fh, indent=2)
-        except Exception:
-            logger.exception("Failed to write results.json for job %s", job_id)
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            raise RuntimeError("Failed to read job metadata") from exc
 
-        logger.info("Completed sample AutoML task for job %s", job_id)
+        results = run_full_automl(settings, job_id, meta)
+        finished_at = datetime.now(timezone.utc)
+        results.setdefault("start_time", started_at.isoformat())
+        results["end_time"] = finished_at.isoformat()
+
+        logger.info("Completed FLAML AutoML task for job %s", job_id)
         return results
     except Exception as exc:
         logger.exception("AutoML task failed for job %s", job_id)
