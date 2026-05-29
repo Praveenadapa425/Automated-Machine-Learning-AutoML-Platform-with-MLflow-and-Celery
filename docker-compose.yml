@@ -28,7 +28,7 @@ services:
     volumes:
       - mlflow-data:/mlflow
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000 || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000')\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -49,6 +49,8 @@ services:
     depends_on:
       - redis
       - mlflow
+    volumes:
+      - shared-data:/data
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -70,6 +72,8 @@ services:
     depends_on:
       - redis
       - mlflow
+    volumes:
+      - shared-data:/data
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.celery_app:celery_app inspect ping --timeout=5 || exit 1"]
       interval: 10s
@@ -79,3 +83,4 @@ services:
 
 volumes:
   mlflow-data:
+  shared-data:

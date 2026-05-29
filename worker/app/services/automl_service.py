@@ -54,16 +54,24 @@ def run_full_automl(settings: Settings, job_id: str, metadata: dict[str, Any]) -
 
     # Split
     stratify = y if task_type == "classification" else None
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=stratify
-    )
+    try:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=stratify
+        )
+    except ValueError:
+        # Small datasets may not support stratification; fall back to a plain split.
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Preprocessing
     numeric_cols = X.select_dtypes(include=[np.number]).columns.tolist()
     categorical_cols = [c for c in X.columns if c not in numeric_cols]
 
     numeric_transformer = make_pipeline(SimpleImputer(strategy="mean"), StandardScaler())
-    cat_transformer = make_pipeline(SimpleImputer(strategy="most_frequent"), OneHotEncoder(handle_unknown="ignore", sparse=False))
+    try:
+        encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    except TypeError:
+        encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+    cat_transformer = make_pipeline(SimpleImputer(strategy="most_frequent"), encoder)
 
     preprocessor = ColumnTransformer(
         [("num", numeric_transformer, numeric_cols), ("cat", cat_transformer, categorical_cols)],

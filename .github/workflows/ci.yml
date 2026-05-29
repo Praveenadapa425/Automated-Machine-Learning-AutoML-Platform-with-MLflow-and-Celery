@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install API dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+          pip install pytest
+
+      - name: Install worker dependencies
+        run: |
+          pip install -r worker/requirements.txt
+
+      - name: Run tests
+        env:
+          UPLOAD_DIR: /tmp/automl/uploads
+          ARTIFACTS_DIR: /tmp/automl/artifacts
+          REPORTS_DIR: /tmp/automl/reports
+        run: |
+          mkdir -p "$UPLOAD_DIR" "$ARTIFACTS_DIR" "$REPORTS_DIR"
+          pytest -q
