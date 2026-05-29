@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from datetime import datetime, timezone
+import json
 
 from app.celery_app import celery_app
 from app.core.config import get_settings
@@ -26,20 +27,28 @@ def train_automl(self, job_id: str) -> dict[str, str]:
 
         paths = prepare_job_paths(settings, job_id)
         logger.info("Starting sample AutoML task for job %s", job_id)
+        # --- Minimal artifact generation for API integration ---
         finished_at = datetime.now(timezone.utc)
 
-        result = {
+        results = {
             "job_id": job_id,
-            "message": "Sample AutoML task completed",
+            "best_model_name": "baseline-model",
+            "best_model_score": 0.0,
+            "evaluation_metric": "accuracy",
+            "mlflow_run_id": None,
             "start_time": started_at.isoformat(),
             "end_time": finished_at.isoformat(),
-            "artifacts_dir": str(paths["artifacts"]),
-            "reports_dir": str(paths["reports"]),
-            "csv_path": str(csv_path),
         }
 
+        results_file = Path(paths["artifacts"]) / "results.json"
+        try:
+            with results_file.open("w", encoding="utf-8") as fh:
+                json.dump(results, fh, indent=2)
+        except Exception:
+            logger.exception("Failed to write results.json for job %s", job_id)
+
         logger.info("Completed sample AutoML task for job %s", job_id)
-        return result
+        return results
     except Exception as exc:
         logger.exception("AutoML task failed for job %s", job_id)
         self.update_state(

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
-@router.post("", response_model=JobCreateResponse, status_code=201, summary="Create AutoML job")
+@router.post("", response_model=JobCreateResponse, status_code=202, summary="Create AutoML job")
 async def create_job(
     csv_file: UploadFile = File(...),
     target_column: str = Form(...),
