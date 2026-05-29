@@ -27,3 +27,13 @@ Set values in `api/.env.example` or copy them into a local `.env` file before ru
 ```bash
 docker compose up --build
 ```
+
+## Run ports
+
+- API: configured by `API_PORT` (default 8000). Set in root `.env.example`.
+
+To build and run (detached):
+
+```bash
+docker compose up --build -d
+```

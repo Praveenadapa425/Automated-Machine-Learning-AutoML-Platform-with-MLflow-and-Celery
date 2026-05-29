@@ -14,4 +14,6 @@ COPY --chown=app:app app ./app
 
 USER app
 
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD celery -A app.celery_app:celery_app inspect ping --timeout=5 || exit 1
+
 CMD ["celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=info", "--concurrency=1", "--hostname=automl@%h"]
